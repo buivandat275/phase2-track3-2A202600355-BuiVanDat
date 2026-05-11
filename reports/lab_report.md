@@ -65,11 +65,11 @@ flowchart TD
 
 ## 4. Scenario results
 
-- Total scenarios: 7
+- Total scenarios: 13
 - Success rate: 100.00%
-- Average nodes visited: 6.43
-- Total retries: 3
-- Total interrupts/approval events: 2
+- Average nodes visited: 6.69
+- Total retries: 5
+- Total interrupts/approval events: 4
 - Resume success: False
 
 | Scenario | Expected route | Actual route | Success | Retries | Interrupts |
@@ -81,6 +81,12 @@ flowchart TD
 | S05_error | error | error | True | 2 | 0 |
 | S06_delete | risky | risky | True | 0 | 1 |
 | S07_dead_letter | error | error | True | 1 | 0 |
+| S08_cancel | risky | risky | True | 0 | 1 |
+| S09_track_order | tool | tool | True | 0 | 0 |
+| S10_vague_issue | missing_info | missing_info | True | 0 | 0 |
+| S11_crash | error | error | True | 2 | 0 |
+| S12_revoke | risky | risky | True | 0 | 1 |
+| S13_find_ticket | tool | tool | True | 0 | 0 |
 
 ## 5. Failure analysis
 
