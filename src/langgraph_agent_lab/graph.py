@@ -28,7 +28,6 @@ from .state import AgentState
 def build_graph(checkpointer: Any | None = None):
     """Build and compile the LangGraph workflow.
 
-    TODO(student): review the architecture and modify nodes/edges only with a clear reason.
     Required behaviors:
     - intake -> classify (normalization + routing)
     - classify routes to answer/tool/clarify/risky/retry
@@ -57,12 +56,14 @@ def build_graph(checkpointer: Any | None = None):
 
     graph.add_edge(START, "intake")
     graph.add_edge("intake", "classify")
+    # Conditional edges make the routing policy explicit and keep each node single-purpose.
     graph.add_conditional_edges("classify", route_after_classify)
     graph.add_edge("tool", "evaluate")
     graph.add_conditional_edges("evaluate", route_after_evaluate)
     graph.add_edge("clarify", "finalize")
     graph.add_edge("risky_action", "approval")
     graph.add_conditional_edges("approval", route_after_approval)
+    # Retry is bounded in route_after_retry; exhausted runs go to dead_letter and then finalize.
     graph.add_conditional_edges("retry", route_after_retry)
     graph.add_edge("answer", "finalize")
     graph.add_edge("dead_letter", "finalize")

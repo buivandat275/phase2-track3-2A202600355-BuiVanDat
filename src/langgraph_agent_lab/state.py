@@ -41,8 +41,9 @@ class ApprovalDecision(BaseModel):
 class AgentState(TypedDict, total=False):
     """LangGraph state.
 
-    TODO(student): decide which fields should be append-only and which should be overwritten.
-    The current annotations give a safe starting point for auditability.
+    Overwrite fields store the current decision/result, while append-only fields keep audit history.
+    LangGraph uses the Annotated[list, add] reducers below to merge new records instead of replacing
+    previous messages, tool results, errors, and events.
     """
 
     thread_id: str

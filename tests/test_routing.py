@@ -6,6 +6,7 @@ def test_route_after_classify():
     assert route_after_classify({"route": Route.SIMPLE.value}) == "answer"
     assert route_after_classify({"route": Route.TOOL.value}) == "tool"
     assert route_after_classify({"route": Route.RISKY.value}) == "risky_action"
+    assert route_after_classify({"route": "unknown"}) == "clarify"
 
 
 def test_route_after_approval():

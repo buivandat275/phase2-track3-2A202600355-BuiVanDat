@@ -1,13 +1,26 @@
-"""Report generation helper."""
+# Day 08 Lab Report
 
-from __future__ import annotations
+## 1. Team / student
 
-from pathlib import Path
+- Name: Bui Van Dat
+- Repo/commit: https://github.com/buivandat275/phase2-track3-2A202600355-BuiVanDat
+- Date: 11/05/2026
 
-from .metrics import MetricsReport
+## 2. Architecture
 
+The workflow is a LangGraph `StateGraph` with explicit node boundaries:
 
-GRAPH_DIAGRAM = """flowchart TD
+- `intake`: normalizes the query and starts the audit trail.
+- `classify`: chooses `simple`, `tool`, `missing_info`, `risky`, or `error` using keyword policy.
+- `tool` and `evaluate`: simulate tool execution and validate whether the result is usable.
+- `retry`: increments attempt count and loops back to `tool` while retry budget remains.
+- `risky_action` and `approval`: model human-in-the-loop approval before risky work.
+- `clarify`, `answer`, `dead_letter`, and `finalize`: terminate every path safely.
+
+Graph diagram extension was exported to `reports/graph_diagram.mmd`:
+
+```mermaid
+flowchart TD
     START([START]) --> intake
     intake --> classify
     classify -- simple --> answer
@@ -27,53 +40,7 @@ GRAPH_DIAGRAM = """flowchart TD
     answer --> finalize
     dead_letter --> finalize
     finalize --> END([END])
-"""
-
-
-def _scenario_table(metrics: MetricsReport) -> str:
-    rows = [
-        "| Scenario | Expected route | Actual route | Success | Retries | Interrupts |",
-        "|---|---|---|---:|---:|---:|",
-    ]
-    for item in metrics.scenario_metrics:
-        rows.append(
-            "| "
-            f"{item.scenario_id} | {item.expected_route} | {item.actual_route} | "
-            f"{item.success} | {item.retry_count} | {item.interrupt_count} |"
-        )
-    return "\n".join(rows)
-
-
-def render_report(metrics: MetricsReport) -> str:
-    """Render the completed lab report from collected metrics.
-
-    The report intentionally follows reports/lab_report_template.md so the generated file is ready
-    to submit after run-scenarios finishes.
-    """
-    diagram_path = "reports/graph_diagram.mmd"
-    return f"""# Day 08 Lab Report
-
-## 1. Team / student
-
-- Name: Bui Van Dat
-- Repo/commit: fill commit hash after final commit
-- Date: generated after scenario run
-
-## 2. Architecture
-
-The workflow is a LangGraph `StateGraph` with explicit node boundaries:
-
-- `intake`: normalizes the query and starts the audit trail.
-- `classify`: chooses `simple`, `tool`, `missing_info`, `risky`, or `error` using keyword policy.
-- `tool` and `evaluate`: simulate tool execution and validate whether the result is usable.
-- `retry`: increments attempt count and loops back to `tool` while retry budget remains.
-- `risky_action` and `approval`: model human-in-the-loop approval before risky work.
-- `clarify`, `answer`, `dead_letter`, and `finalize`: terminate every path safely.
-
-Graph diagram extension was exported to `{diagram_path}`:
-
-```mermaid
-{GRAPH_DIAGRAM}```
+```
 
 ## 3. State schema
 
@@ -98,14 +65,22 @@ Graph diagram extension was exported to `{diagram_path}`:
 
 ## 4. Scenario results
 
-- Total scenarios: {metrics.total_scenarios}
-- Success rate: {metrics.success_rate:.2%}
-- Average nodes visited: {metrics.avg_nodes_visited:.2f}
-- Total retries: {metrics.total_retries}
-- Total interrupts/approval events: {metrics.total_interrupts}
-- Resume success: {metrics.resume_success}
+- Total scenarios: 7
+- Success rate: 100.00%
+- Average nodes visited: 6.43
+- Total retries: 3
+- Total interrupts/approval events: 2
+- Resume success: False
 
-{_scenario_table(metrics)}
+| Scenario | Expected route | Actual route | Success | Retries | Interrupts |
+|---|---|---|---:|---:|---:|
+| S01_simple | simple | simple | True | 0 | 0 |
+| S02_tool | tool | tool | True | 0 | 0 |
+| S03_missing | missing_info | missing_info | True | 0 | 0 |
+| S04_risky | risky | risky | True | 0 | 1 |
+| S05_error | error | error | True | 2 | 0 |
+| S06_delete | risky | risky | True | 0 | 1 |
+| S07_dead_letter | error | error | True | 1 | 0 |
 
 ## 5. Failure analysis
 
@@ -126,25 +101,10 @@ setting `checkpointer: sqlite` in `configs/lab.yaml` and installing the optional
 ## 7. Extension work
 
 Completed extension: graph diagram export. The generated Mermaid diagram is written to
-`{diagram_path}` and embedded above so the control flow can be inspected during the demo.
+`reports/graph_diagram.mmd` and embedded above so the control flow can be inspected during the demo.
 
 ## 8. Improvement plan
 
 With one more day, I would productionize structured tool results first: replace string markers with
 typed result objects, add idempotency keys for retry-safe tool calls, and add a real reviewer UI for
 approval interrupt/resume.
-"""
-
-
-def write_graph_diagram(output_path: str | Path) -> None:
-    """Export the Mermaid graph diagram used as extension evidence."""
-    path = Path(output_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(GRAPH_DIAGRAM, encoding="utf-8")
-
-
-def write_report(metrics: MetricsReport, output_path: str | Path) -> None:
-    path = Path(output_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    write_graph_diagram(path.with_name("graph_diagram.mmd"))
-    path.write_text(render_report(metrics), encoding="utf-8")

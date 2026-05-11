@@ -12,11 +12,12 @@ import yaml
 from .graph import build_graph
 from .metrics import MetricsReport, metric_from_state, summarize_metrics, write_metrics
 from .persistence import build_checkpointer
-from .report import write_report
+from .report import write_graph_diagram, write_report
 from .scenarios import load_scenarios
 from .state import initial_state
 
 app = typer.Typer(no_args_is_help=True)
+DEFAULT_DIAGRAM_PATH = Path("reports/graph_diagram.mmd")
 
 
 @app.command("run-scenarios")
@@ -50,6 +51,15 @@ def validate_metrics(metrics: Annotated[Path, typer.Option("--metrics")]) -> Non
     if report.total_scenarios < 6:
         raise typer.BadParameter("Expected at least 6 scenarios")
     typer.echo(f"Metrics valid. success_rate={report.success_rate:.2%}")
+
+
+@app.command("export-diagram")
+def export_diagram(
+    output: Annotated[Path, typer.Option("--output")] = DEFAULT_DIAGRAM_PATH,
+) -> None:
+    """Export the workflow graph as Mermaid for the diagram extension."""
+    write_graph_diagram(output)
+    typer.echo(f"Wrote graph diagram to {output}")
 
 
 if __name__ == "__main__":
